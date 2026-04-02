@@ -1,32 +1,26 @@
-from flask import Flask,render_template,request
-
+import streamlit as st
 import pickle
 
-# load the model from disk
-filename = 'nlp_model.pkl'
-clf = pickle.load(open(filename, 'rb'))
-cv=pickle.load(open('tranform.pkl','rb'))
-app = Flask(__name__)
+st.set_page_config(page_title="NLP Predictor", page_icon="📝")
 
-@app.route('/')
-def home():
-	return render_template('home.html')
+@st.cache_resource
+def load_models():
+    clf = pickle.load(open("nlp_model.pkl", "rb"))
+    cv = pickle.load(open("tranform.pkl", "rb"))
+    return clf, cv
 
-@app.route('/predict',methods=['POST'])
-def predict():
+clf, cv = load_models()
 
-    if request.method == 'POST':
-        message = request.form['message']
-        
-        
+st.title("NLP Model Prediction")
+st.write("Enter a message and get the model prediction.")
 
+message = st.text_input("Message")
+
+if st.button("Predict"):
+    if message.strip():
         data = [message]
         vect = cv.transform(data).toarray()
         my_prediction = clf.predict(vect)
-        print("my_prediction: " ,my_prediction)
-    return render_template('result.html',prediction = my_prediction)
-
-
-
-if __name__ == '__main__':
-	app.run(debug=True)
+        st.success(f"Prediction: {my_prediction[0]}")
+    else:
+        st.warning("Please enter a message.")
